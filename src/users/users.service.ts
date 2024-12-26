@@ -4,11 +4,14 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 import { Repository } from 'typeorm';
+import { CreateProfileDto } from './dto/create-profile.dto';
+import { Profile } from './entities/profile.entity';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User) private userRepository: Repository<User>,
+    @InjectRepository(Profile) private profileRepository: Repository<Profile>,
   ) {}
 
   async create(user: CreateUserDto) {
@@ -68,5 +71,27 @@ export class UsersService {
     }
 
     return result;
+  }
+
+  async createProfile(id: string, profile: CreateProfileDto) {
+    // buscamos el ususario a relacionar
+    const userFound = await this.userRepository.findOne({
+      where: {
+        id,
+      },
+    });
+
+    if (!userFound) {
+      return new HttpException('User not Found', HttpStatus.NOT_FOUND);
+    }
+
+    // creamos un perfil nuevo
+    const newProfile = this.profileRepository.create(profile);
+    // guardamos el perfil
+    const savedProfile = await this.profileRepository.save(newProfile);
+    // lo asignamos al usuario encontrado
+    userFound.profile = savedProfile;
+
+    return this.userRepository.save(userFound);
   }
 }
