@@ -30,7 +30,9 @@ export class UsersService {
   }
 
   findAll() {
-    return this.userRepository.find();
+    return this.userRepository.find({
+      relations: ['posts', 'profile'],
+    });
   }
 
   async findOne(id: string) {
